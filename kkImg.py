@@ -26,6 +26,16 @@ def convert_screenshot_filename_to_datetime(filename):
   else:
     return filename
 
+def convert_other_filename_to_datetime(filename):
+  # ファイル名末尾の括弧と連番を削除
+  filename = re.sub(r"\(.*\)", "", filename)
+  # ハイフンをコロンに置き換える
+  filename = filename.replace("-", ":")
+  # 拡張子 ".png" を削除する
+  if filename.endswith(".png"):
+    filename = filename[:-4]
+  return filename
+
 def convert_filename_to_datetime(filename):
   """
   Args:
@@ -44,7 +54,7 @@ def convert_filename_to_datetime(filename):
     return convert_screenshot_filename_to_datetime(filename)
   # その他
   else:
-    return filename
+    return convert_other_filename_to_datetime(filename)
 
 def list_png_files(directory):
     png_files = [file for file in os.listdir(directory) if file.lower().endswith(('.png', '.jpeg', '.jpg'))]
