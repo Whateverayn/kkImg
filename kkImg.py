@@ -5,9 +5,17 @@ from subprocess import run, PIPE
 import re
 from datetime import datetime
 
+def convert_vlcsnap_filename_to_datetime(filename):
+  match = re.match(r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", filename)
+  if match:
+    return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+  else:
+    return filename
+
+
+
 def convert_filename_to_datetime(filename):
     """
-    ファイル名から年、月、日、時、分、秒、ミリ秒の配列を取得します。
     Args:
         filename: ファイル名
     Returns:
@@ -19,7 +27,11 @@ def convert_filename_to_datetime(filename):
     if match:
         return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
     else:
-        return filename
+        match2 = re.match(r"VirtualBox_Windows_(\d{2})_(\d{2})_(\d{4})_(\d{2})_(\d{2})_(\d{2}).png", filename)
+        if match2:
+            return str(match2.group(3)) + ":" + str(match2.group(2)) + ":" + str(match2.group(1)) + " " + str(match2.group(4)) + ":" + str(match2.group(5)) + ":" + str(match2.group(6))
+        else:
+            return filename
 
 
     pattern = r'(\d+)\.(jpg|jpeg|png|gif)'
