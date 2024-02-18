@@ -6,6 +6,22 @@ import re
 from datetime import datetime
 
 def convert_filename_to_datetime(filename):
+    """
+    ファイル名から年、月、日、時、分、秒、ミリ秒の配列を取得します。
+    Args:
+        filename: ファイル名
+    Returns:
+        yyyy:MM:dd hh:mm:ss
+    """
+
+    # [VLC] vlcsnap-2022-02-25-01h42m37s533.png
+    match = re.match(r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", filename)
+    if match:
+        return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+    else:
+        return filename
+
+
     pattern = r'(\d+)\.(jpg|jpeg|png|gif)'
     match = re.search(pattern, filename)
     if match:
