@@ -12,69 +12,39 @@ def convert_vlcsnap_filename_to_datetime(filename):
   else:
     return filename
 
+def convert_virtualbox_filename_to_datetime(filename):
+  match = re.match(r"VirtualBox_Windows_(\d{2})_(\d{2})_(\d{4})_(\d{2})_(\d{2})_(\d{2}).png", filename)
+  if match:
+    return str(match.group(3)) + ":" + str(match.group(2)) + ":" + str(match.group(1)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+  else:
+    return filename
 
+def convert_screenshot_filename_to_datetime(filename):
+  match = re.match(r"Screenshot_(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2}).png", filename)
+  if match:
+    return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+  else:
+    return filename
 
 def convert_filename_to_datetime(filename):
-    """
-    Args:
-        filename: ファイル名
-    Returns:
-        yyyy:MM:dd hh:mm:ss
-    """
-
-    # [VLC] vlcsnap-2022-02-25-01h42m37s533.png
-    match = re.match(r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", filename)
-    if match:
-        return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
-    else:
-        match2 = re.match(r"VirtualBox_Windows_(\d{2})_(\d{2})_(\d{4})_(\d{2})_(\d{2})_(\d{2}).png", filename)
-        if match2:
-            return str(match2.group(3)) + ":" + str(match2.group(2)) + ":" + str(match2.group(1)) + " " + str(match2.group(4)) + ":" + str(match2.group(5)) + ":" + str(match2.group(6))
-        else:
-            return filename
-
-
-    pattern = r'(\d+)\.(jpg|jpeg|png|gif)'
-    match = re.search(pattern, filename)
-    if match:
-        timestamp = int(match.group(1))
-        dt_object = datetime.fromtimestamp(timestamp / 1000)        
-        formatted_date = dt_object.strftime('%Y:%m:%d %H:%M:%S')
-        return formatted_date
-    else:
-        return filename
-
-    # ファイル名から日付と時刻を抽出するための正規表現パターン
-    patterns = [
-        r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}\d{2}-\d{3}',    # 2023-08-26-22-13-36-755
-        r'\d{8}-\d{6}',                   # 20230828-085716
-        r'\d{14}',                        # 20230827185229
-        r'\d+'                            # エポックタイム形式 (数字のみ)
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, filename)
-        if match:
-            date_str = match.group(0)
-            try:
-                if len(date_str) == 17:
-                    dt = datetime.strptime(date_str, "%Y-%m-%d-%H-%M-%S-%f")
-                elif len(date_str) == 14:
-                    dt = datetime.strptime(date_str, "%Y%m%d%H%M%S")
-                elif len(date_str) == 8:
-                    # 日付のみのエポックタイム形式の場合、時刻を 00:00:00 として扱う
-                    dt = datetime.strptime(date_str, "%Y%m%d")
-                else:
-                    # エポックタイム形式の場合
-                    epoch_time = int(date_str)
-                    dt = datetime.fromtimestamp(epoch_time / 1000)  # ミリ秒単位のエポックタイム
-
-                formatted_datetime = dt.strftime("%Y:%m:%d %H:%M:%S")
-                return formatted_datetime
-            except ValueError:
-                pass
-    
-    return None
+  """
+  Args:
+    filename: ファイル名
+  Returns:
+    yyyy:MM:dd hh:mm:ss
+  """
+  # VLCスナップショット
+  if filename.startswith("vlcsnap-"):
+    return convert_vlcsnap_filename_to_datetime(filename)
+  # VirtualBox
+  elif filename.startswith("VirtualBox_Windows_"):
+    return convert_virtualbox_filename_to_datetime(filename)
+  # スクリーンショット
+  elif filename.startswith("Screenshot_"):
+    return convert_screenshot_filename_to_datetime(filename)
+  # その他
+  else:
+    return filename
 
 def list_png_files(directory):
     png_files = [file for file in os.listdir(directory) if file.lower().endswith(('.png', '.jpeg', '.jpg'))]
