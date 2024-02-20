@@ -26,6 +26,15 @@ def convert_screenshot_filename_to_datetime(filename):
   else:
     return filename
 
+def convert_screenshot_unix_filename_to_datetime(filename):
+    match = re.match(r"Screenshot_(\d{10}).png", filename)
+    if match:
+        timestamp = int(match.group(1))
+        datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        return datetime.strftime("%Y:%m:%d %H:%M:%S")
+    else:
+        return filename
+
 def convert_other_filename_to_datetime(filename):
   # ファイル名末尾の括弧と連番を削除
   filename = re.sub(r"\(.*\)", "", filename)
@@ -51,7 +60,11 @@ def convert_filename_to_datetime(filename):
     return convert_virtualbox_filename_to_datetime(filename)
   # スクリーンショット
   elif filename.startswith("Screenshot_"):
-    return convert_screenshot_filename_to_datetime(filename)
+    # 2種類の抽出関数を試して、成功した方を返す
+    datetime = convert_screenshot_filename_to_datetime(filename)
+    if datetime != filename:
+        return datetime
+    return convert_screenshot_unix_filename_to_datetime(filename)
   # その他
   else:
     return convert_other_filename_to_datetime(filename)
@@ -125,7 +138,7 @@ def main(page: ft.Page):
             exBut.visible = False
             dtBut.visible = False
         page.update()
-    
+
     nav_bt_unmaximize = ft.IconButton(ft.icons.KEYBOARD_ARROW_DOWN, on_click=def_click,height=appHeight,width=appHeight,tooltip="前のウインドウサイズに戻す",icon_size=appIconSize,visible=False)
     nav_bt_maximize = ft.IconButton(ft.icons.KEYBOARD_ARROW_UP, on_click=max_click,height=appHeight,width=appHeight,tooltip="ウインドウを最大化する",icon_size=appIconSize)
     nav_func_switch = ft.Dropdown(
@@ -186,7 +199,7 @@ def main(page: ft.Page):
             run_job_button.disabled = True
             run_job_button.text = "確認を実行してください"
         page.update()
-    
+
     def run_convert(e):
         png_file_dir = input_file_button.text
         avif_file_dir = output_file_button.text
@@ -272,7 +285,7 @@ def main(page: ft.Page):
         ex_input_file_button.text = e.path
 
         page.update()
-    
+
     def ex_job_file_ck(e):
         ex_directory_path = ex_input_file_button.text
         ex_img_list = get_image_files(ex_file_type_button.value, ex_directory_path)
@@ -365,7 +378,7 @@ def main(page: ft.Page):
             ft.Row([ft.Container(ex_file_view,expand=True)],vertical_alignment="CENTER"),
         ],visible = False
     )
-    
+
     appMain = ft.Container(
             content=ft.Column(
                 [
@@ -383,6 +396,6 @@ def main(page: ft.Page):
             ],spacing=0,
         )
     )
-    
+
 ft.app(target=main, assets_dir="assets")
 
