@@ -35,6 +35,22 @@ def convert_screenshot_unix_filename_to_datetime(filename):
     else:
         return filename
 
+# IMG_20220812_121806.jpg
+def convert_img_filename_to_datetime(filename):
+  match = re.match(r"IMG_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}).jpg", filename)
+  if match:
+    return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+  else:
+    return filename
+
+# Polish_20220813_200837408.jpg
+def convert_polish_filename_to_datetime(filename):
+  match = re.match(r"Polish_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(\d{3}).jpg", filename)
+  if match:
+    return str(match.group(1)) + ":" + str(match.group(2)) + ":" + str(match.group(3)) + " " + str(match.group(4)) + ":" + str(match.group(5)) + ":" + str(match.group(6))
+  else:
+    return filename
+
 def convert_other_filename_to_datetime(filename):
   # ファイル名末尾の括弧と連番を削除
   filename = re.sub(r"\(.*\)", "", filename)
@@ -65,6 +81,15 @@ def convert_filename_to_datetime(filename):
     if datetime != filename:
         return datetime
     return convert_screenshot_unix_filename_to_datetime(filename)
+
+  # IMGファイル (IMG_20220812_121806.jpg)
+  elif filename.startswith("IMG_"):
+    return convert_img_filename_to_datetime(filename)
+
+  # Polishファイル (Polish_20220813_200837408.jpg)
+  elif filename.startswith("Polish_"):
+    return convert_polish_filename_to_datetime(filename)
+
   # その他
   else:
     return convert_other_filename_to_datetime(filename)
