@@ -3,7 +3,8 @@ import os
 import subprocess
 from subprocess import run, PIPE
 import re
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 def convert_vlcsnap_filename_to_datetime(filename):
   match = re.match(r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", filename)
@@ -51,6 +52,31 @@ def convert_polish_filename_to_datetime(filename):
   else:
     return filename
 
+# Unix時間と拡張子のみで構成されたファイル名かどうか
+def _is_unix_timestamp_filename(filename):
+  # ファイル名の末尾に拡張子が存在するかどうか
+  if not filename.endswith(".jpg") and not filename.endswith(".mp4"):
+    return False
+  # ファイル名の先頭10文字が数字かどうか
+  try:
+    if len(filename[:-4]) == 10 or len(filename[:-4]) == 13:
+      int(filename[:-4])
+    else:
+      return False
+  except ValueError:
+    return False
+  return True
+
+# Unix時間と拡張子のみで構成されたファイル名の抽出
+def convert_unix_timestamp_filename_to_datetime(filename):
+  # Unix時間をdatetimeに変換
+  unix_timestamp = int(filename[:-4])
+  if len(str(unix_timestamp)) == 13:
+    unix_timestamp = int(str(unix_timestamp)[:10])
+  datetimeA = datetime.fromtimestamp(unix_timestamp)
+  # 日付と時刻を結合
+  return datetimeA.strftime("%Y:%m:%d %H:%M:%S")
+
 def convert_other_filename_to_datetime(filename):
   # ファイル名末尾の括弧と連番を削除
   filename = re.sub(r"\(.*\)", "", filename)
@@ -89,6 +115,10 @@ def convert_filename_to_datetime(filename):
   # Polishファイル (Polish_20220813_200837408.jpg)
   elif filename.startswith("Polish_"):
     return convert_polish_filename_to_datetime(filename)
+
+  # Unix時間と拡張子のみで構成されたファイル名 (1660318616181.mp4)
+  elif _is_unix_timestamp_filename(filename):
+    return convert_unix_timestamp_filename_to_datetime(filename)
 
   # その他
   else:
