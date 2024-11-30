@@ -3,7 +3,7 @@ import os
 import subprocess
 from subprocess import run, PIPE
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
 def convert_vlcsnap_filename_to_datetime(filename):
@@ -55,12 +55,14 @@ def convert_polish_filename_to_datetime(filename):
 # Unix時間と拡張子のみで構成されたファイル名かどうか
 def _is_unix_timestamp_filename(filename):
   # ファイル名の末尾に拡張子が存在するかどうか
-  if not filename.endswith(".jpg") and not filename.endswith(".mp4"):
+  if not filename.endswith(".jpg") and not filename.endswith(".png") and not filename.endswith(".mp4"):
     return False
   # ファイル名の先頭10文字が数字かどうか
   try:
-    if len(filename[:-4]) == 10 or len(filename[:-4]) == 13:
-      int(filename[:-4])
+    base_name = filename[:-4]
+    # Unix時間が10桁または13桁であるかを確認
+    if len(base_name) in [10, 13]:
+      int(base_name)
     else:
       return False
   except ValueError:
@@ -69,10 +71,12 @@ def _is_unix_timestamp_filename(filename):
 
 # Unix時間と拡張子のみで構成されたファイル名の抽出
 def convert_unix_timestamp_filename_to_datetime(filename):
+  base_name = filename[:-4]
   # Unix時間をdatetimeに変換
-  unix_timestamp = int(filename[:-4])
+  unix_timestamp = int(base_name)
+  # 13桁のUnix時間の場合は10桁に変換
   if len(str(unix_timestamp)) == 13:
-    unix_timestamp = int(str(unix_timestamp)[:10])
+    unix_timestamp //= 1000
   datetimeA = datetime.fromtimestamp(unix_timestamp)
   # 日付と時刻を結合
   return datetimeA.strftime("%Y:%m:%d %H:%M:%S")
@@ -124,8 +128,30 @@ def convert_filename_to_datetime(filename):
   else:
     return convert_other_filename_to_datetime(filename)
 
+# 試験運用
+
+def convert_filename_to_datetime_2(filename):
+    patterns = [
+        (r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", "{0}:{1}:{2} {3}:{4}:{5}"),
+        (r"VirtualBox_Windows_(\d{2})_(\d{2})_(\d{4})_(\d{2})_(\d{2})_(\d{2}).png", "{2}:{1}:{0} {3}:{4}:{5}"),
+        (r"Screenshot_(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2}).png", "{0}:{1}:{2} {3}:{4}:{5}"),
+        (r"Screenshot_(\d{10}).png", lambda match: datetime.fromtimestamp(int(match.group(1)), tz=timezone.utc).strftime("%Y:%m:%d %H:%M:%S")),
+        (r"IMG_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}).jpg", "{0}:{1}:{2} {3}:{4}:{5}"),
+        (r"Polish_(\d{8})_(\d{6})\d{3}.jpg", "{0}:{1}:{2} {3}:{4}:{5}"),
+        (r"chrome_image_(\d{4})_(\d{2})_(\d{2}) (\d{2})_(\d{2})_(\d{2}) JST.png", "{0}:{1}:{2} {3}:{4}:{5}"),
+        (r"(\d{13}).(jpg|png)", lambda match: datetime.fromtimestamp(int(match.group(1)) / 1000, tz=timezone(timedelta(hours=9))).strftime("%Y:%m:%d %H:%M:%S")),
+    ]
+
+    for pattern, format_str in patterns:
+        match = re.match(pattern, filename)
+        if match:
+            if callable(format_str):
+                return format_str(match)
+            return format_str.format(*match.groups())
+    return filename
+
 def list_png_files(directory):
-    png_files = [file for file in os.listdir(directory) if file.lower().endswith(('.png', '.jpeg', '.jpg'))]
+    png_files = [file for file in os.listdir(directory) if file.lower().endswith(('.png', '.jpeg', '.jpg', '.heic'))]
     return png_files
 
 def get_image_files(exe, directory_path):
@@ -374,7 +400,7 @@ def main(page: ft.Page):
         pic_date_inpit.value = data
         page.update()
     def img_time_predict(e):
-        pic_date_inpit.value = convert_filename_to_datetime(lv_r.value)
+        pic_date_inpit.value = convert_filename_to_datetime_2(lv_r.value)
         page.update()
     def img_time_write(e):
         prev_file_name = lv_r.value
