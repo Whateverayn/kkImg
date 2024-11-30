@@ -5,6 +5,7 @@ from subprocess import run, PIPE
 import re
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
+import tempfile
 
 def convert_vlcsnap_filename_to_datetime(filename):
   match = re.match(r"vlcsnap-(\d{4})-(\d{2})-(\d{2})-(\d{2})h(\d{2})m(\d{2})s(\d{3}).png", filename)
@@ -150,9 +151,13 @@ def convert_filename_to_datetime_2(filename):
             return format_str.format(*match.groups())
     return filename
 
+# 廃止予定
 def list_png_files(directory):
     png_files = [file for file in os.listdir(directory) if file.lower().endswith(('.png', '.jpeg', '.jpg', '.heic'))]
     return png_files
+
+def list_files(directory, extensions):
+    return [f for f in os.listdir(directory) if f.lower().endswith(extensions)] 
 
 def get_image_files(exe, directory_path):
     exew = '.' + str(exe)
@@ -284,25 +289,57 @@ def main(page: ft.Page):
     def run_convert(e):
         png_file_dir = input_file_button.text
         avif_file_dir = output_file_button.text
-        png_file_list = list_png_files(png_file_dir)
+        png_file_list = list_files(png_file_dir, ('.png', '.jpeg', '.jpg', '.heic'))
         conv_prog_ring.visible = True
         conv_prog_ring_p.visible = True
         num_count = 1
         for png_file in png_file_list:
             avif_file_name = replace_extension(png_file, 'avif')
-            png_full_path = "\"" + png_file_dir + "\\" + png_file + "\""
-            avif_full_path = "\"" + avif_file_dir + "\\" + avif_file_name + "\""
-            run_job_button.text = "["+str(num_count)+"] "+avif_file_name
-            conv_img_prev.src=os.path.join(png_file_dir, png_file)
+            png_full_path = os.path.join(png_file_dir, png_file)
+            avif_full_path = os.path.join(avif_file_dir, avif_file_name)
+            run_job_button.text = f"[{num_count}] {avif_file_name}"
+            conv_img_prev.src = png_full_path
             conv_prog_ring_p.value = num_count / len(png_file_list)
             page.update()
-            num_count = num_count + 1
-            subprocess.run(f"avifenc {png_full_path} {avif_full_path} --min 0 --max 63 -a end-usage=q -a cq-level={int(quality_slider.value)} -a tune=ssim --jobs {int(jobs_slider.value)}", shell=True)
-            second_command = [
-                "exiftool",
-                "-TagsFromFile", png_full_path, avif_full_path
-            ]
-            subprocess.run(second_command)
+            num_count += 1
+
+            # ファイル拡張子の確認
+            file_extension = os.path.splitext(png_file)[1].lower()
+            if file_extension in ['.png', '.jpeg', '.jpg']:
+                # avifenc を使用して変換
+                subprocess.run([
+                    'avifenc', png_full_path, avif_full_path,
+                    '--min', '0', '--max', '63', '-a', 'end-usage=q',
+                    '-a', f'cq-level={int(quality_slider.value)}', '-a', 'tune=ssim',
+                    '--jobs', f'{int(jobs_slider.value)}'
+                ], check=True)
+            else:
+                # 一時ファイルを使用して ImageMagick から PNG に変換
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_png:
+                    temp_png_name = temp_png.name
+                    temp_png.close()
+                    subprocess.run([
+                        'magick', png_full_path, temp_png_name
+                    ], check=True)
+                    # PNG から AVIF に変換
+                    subprocess.run([
+                        'avifenc', '-a', 'end-usage=q',
+                        '--min', '0', '--max', '63', 
+                        '-a', f'cq-level={int(quality_slider.value)}',
+                        '-a', 'tune=ssim',
+                        temp_png_name, avif_full_path,
+                        '--jobs', f'{int(jobs_slider.value)}'
+                    ], check=True)
+
+                    os.remove(temp_png_name)
+
+            # Exif情報をコピー
+            subprocess.run([
+                "exiftool", 
+                "-TagsFromFile", png_full_path, avif_full_path,
+                "-overwrite_original"
+            ], check=True)
+
         run_job_button.text = "完了"
         conv_img_prev.src="s\\t.png"
         conv_prog_ring.visible = False
