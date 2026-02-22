@@ -3,20 +3,27 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00614AAC98C56B117093462E /* FilterSegmentView.m in Sources */ = {isa = PBXBuildFile; fileRef = 806BE3F1AA4A0792A6F886CD /* FilterSegmentView.m */; };
+		16E9AD64C894A2FCD96BF439 /* KKThumbnailView.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDD319CB89441B401C883B15 /* KKThumbnailView.mm */; };
+		1CB4327874B151AE830048A7 /* RollupButtonWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46CBBB2C7FD135ADE2C51C39 /* RollupButtonWrapper.swift */; };
 		5142014D2437B4B30078DB4F /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5142014C2437B4B30078DB4F /* AppDelegate.mm */; };
 		514201522437B4B40078DB4F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 514201512437B4B40078DB4F /* Assets.xcassets */; };
 		514201552437B4B40078DB4F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 514201532437B4B40078DB4F /* Main.storyboard */; };
 		514201582437B4B40078DB4F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 514201572437B4B40078DB4F /* main.m */; };
+		69027DA1804558072E06731B /* FilterSegmentManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 10BC09907B97FE5448BA0F73 /* FilterSegmentManager.m */; };
 		995FD4AF0719C7A9DBEC55C2 /* libPods-kkImgDesktop-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 962374E19181920502A0B2DA /* libPods-kkImgDesktop-macOS.a */; };
+		F612071D6630078BE55586ED /* KKThumbnailViewManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = DB3A5F5E1896EA6BC4A79587 /* KKThumbnailViewManager.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		07223F61E698AB004A5B961D /* Pods-kkImgDesktop-macOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-kkImgDesktop-macOS.debug.xcconfig"; path = "Target Support Files/Pods-kkImgDesktop-macOS/Pods-kkImgDesktop-macOS.debug.xcconfig"; sourceTree = "<group>"; };
+		10BC09907B97FE5448BA0F73 /* FilterSegmentManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = FilterSegmentManager.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* kkImgDesktop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kkImgDesktop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		46CBBB2C7FD135ADE2C51C39 /* RollupButtonWrapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RollupButtonWrapper.swift; sourceTree = "<group>"; };
 		514201492437B4B30078DB4F /* kkImgDesktop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kkImgDesktop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5142014B2437B4B30078DB4F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		5142014C2437B4B30078DB4F /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -25,9 +32,15 @@
 		514201562437B4B40078DB4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		514201572437B4B40078DB4F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		514201592437B4B40078DB4F /* kkImgDesktop.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = kkImgDesktop.entitlements; sourceTree = "<group>"; };
+		806BE3F1AA4A0792A6F886CD /* FilterSegmentView.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = FilterSegmentView.m; sourceTree = "<group>"; };
 		8A9F7C8D970C877F28135152 /* Pods-kkImgDesktop-macOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-kkImgDesktop-macOS.release.xcconfig"; path = "Target Support Files/Pods-kkImgDesktop-macOS/Pods-kkImgDesktop-macOS.release.xcconfig"; sourceTree = "<group>"; };
 		962374E19181920502A0B2DA /* libPods-kkImgDesktop-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-kkImgDesktop-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A9C9A38FE499B61FFB02799 /* KKThumbnailView.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = KKThumbnailView.h; sourceTree = "<group>"; };
+		A0DA30276FC9753DB4345EC2 /* KKThumbnailViewManager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = KKThumbnailViewManager.h; sourceTree = "<group>"; };
+		DB3A5F5E1896EA6BC4A79587 /* KKThumbnailViewManager.mm */ = {isa = PBXFileReference; includeInIndex = 1; path = KKThumbnailViewManager.mm; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EDD319CB89441B401C883B15 /* KKThumbnailView.mm */ = {isa = PBXFileReference; includeInIndex = 1; path = KKThumbnailView.mm; sourceTree = "<group>"; };
+		F379BCE72F4B0709005DE542 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Main.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +81,12 @@
 				514201562437B4B40078DB4F /* Info.plist */,
 				514201572437B4B40078DB4F /* main.m */,
 				514201592437B4B40078DB4F /* kkImgDesktop.entitlements */,
+				46CBBB2C7FD135ADE2C51C39 /* RollupButtonWrapper.swift */,
+				957EDEC48C41101E6D0CF2BC /* FilterSegment */,
+				A0DA30276FC9753DB4345EC2 /* KKThumbnailViewManager.h */,
+				DB3A5F5E1896EA6BC4A79587 /* KKThumbnailViewManager.mm */,
+				9A9C9A38FE499B61FFB02799 /* KKThumbnailView.h */,
+				EDD319CB89441B401C883B15 /* KKThumbnailView.mm */,
 			);
 			path = "kkImgDesktop-macOS";
 			sourceTree = "<group>";
@@ -102,13 +121,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		957EDEC48C41101E6D0CF2BC /* FilterSegment */ = {
+			isa = PBXGroup;
+			children = (
+				806BE3F1AA4A0792A6F886CD /* FilterSegmentView.m */,
+				10BC09907B97FE5448BA0F73 /* FilterSegmentManager.m */,
+			);
+			name = FilterSegment;
+			path = "kkImgDesktop-macOS/FilterSegment";
+			sourceTree = SOURCE_ROOT;
+		};
 		FC1BDC7F3CE781EDB3273A92 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
 				07223F61E698AB004A5B961D /* Pods-kkImgDesktop-macOS.debug.xcconfig */,
 				8A9F7C8D970C877F28135152 /* Pods-kkImgDesktop-macOS.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -177,6 +205,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -297,6 +326,11 @@
 			files = (
 				514201582437B4B40078DB4F /* main.m in Sources */,
 				5142014D2437B4B30078DB4F /* AppDelegate.mm in Sources */,
+				1CB4327874B151AE830048A7 /* RollupButtonWrapper.swift in Sources */,
+				00614AAC98C56B117093462E /* FilterSegmentView.m in Sources */,
+				69027DA1804558072E06731B /* FilterSegmentManager.m in Sources */,
+				F612071D6630078BE55586ED /* KKThumbnailViewManager.mm in Sources */,
+				16E9AD64C894A2FCD96BF439 /* KKThumbnailView.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +341,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				514201542437B4B40078DB4F /* Base */,
+				F379BCE72F4B0709005DE542 /* mul */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -322,7 +357,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "kkImgDesktop-iOS/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -343,7 +381,10 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = "kkImgDesktop-iOS/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -361,10 +402,14 @@
 			baseConfigurationReference = 07223F61E698AB004A5B961D /* Pods-kkImgDesktop-macOS.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = NO;
 				INFOPLIST_FILE = "kkImgDesktop-macos/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -374,6 +419,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = kkImgDesktop;
 				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -382,9 +428,13 @@
 			baseConfigurationReference = 8A9F7C8D970C877F28135152 /* Pods-kkImgDesktop-macOS.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = "kkImgDesktop-macos/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -394,6 +444,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = kkImgDesktop;
 				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -445,12 +496,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SDKROOT)/usr/lib/swift",
 					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
 					"\"$(inherited)\"",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "$(inherited)";
@@ -507,12 +562,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SDKROOT)/usr/lib/swift",
 					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
 					"\"$(inherited)\"",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "$(inherited)";
 				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
