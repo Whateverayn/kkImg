@@ -141,6 +141,7 @@ def convert_filename_to_datetime_2(filename):
         (r"Polish_(\d{8})_(\d{6})\d{3}.jpg", "{0}:{1}:{2} {3}:{4}:{5}"),
         (r"chrome_image_(\d{4})_(\d{2})_(\d{2}) (\d{2})_(\d{2})_(\d{2}) JST.png", "{0}:{1}:{2} {3}:{4}:{5}"),
         (r"(\d{13}).(jpg|png)", lambda match: datetime.fromtimestamp(int(match.group(1)) / 1000, tz=timezone(timedelta(hours=9))).strftime("%Y:%m:%d %H:%M:%S")),
+        (r"(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{3})_photo.jpg", lambda match: f"20{match.group(1)}:{match.group(2)}:{match.group(3)} {match.group(4)}:{match.group(5)}:{match.group(6)}"),
     ]
 
     for pattern, format_str in patterns:
