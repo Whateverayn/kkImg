@@ -24,8 +24,10 @@ import FilterSegment from './FilterSegment';
 import ThumbnailView from './ThumbnailView';
 import { t, Locale, getLocale, setLocale } from './i18n';
 
-const { ToolbarEmitter, ToolbarProgress } = NativeModules;
-const toolbarEmitter = new NativeEventEmitter(ToolbarEmitter);
+import C from './platformColors';
+import { getToolbarEmitter, getToolbarProgress, getMetadataReader, getExifToolRunner } from './NativeModulesMock';
+
+const toolbarEmitter = getToolbarEmitter();
 
 /**
  * Date strings come pre-formatted by NSDateFormatter from MetadataReader.mm.
@@ -141,7 +143,7 @@ function App(): React.JSX.Element {
     const item = files.find(f => f.id === activePreviewId);
     if (item && item.rawExifOutput === undefined) {
       setFiles(prev => prev.map(f => f.id === activePreviewId ? { ...f, rawExifOutput: 'Loading ExifTool data...' } : f));
-      const { ExifToolRunner } = NativeModules;
+      const ExifToolRunner = getExifToolRunner();
       ExifToolRunner.executeCommand([item.path])
         .then((result: any) => {
           setFiles(prev => prev.map(f => f.id === activePreviewId ? { ...f, rawExifOutput: result.stdout } : f));
@@ -155,6 +157,7 @@ function App(): React.JSX.Element {
 
   const testProgress = () => {
     setIsProcessing(true);
+    const ToolbarProgress = getToolbarProgress();
     ToolbarProgress.setProgress(5);
     let currentProgress = 5;
     const interval = setInterval(() => {
@@ -182,7 +185,7 @@ function App(): React.JSX.Element {
 
     if (urls.length > 0) {
       setIsProcessing(true);
-      const { MetadataReader } = NativeModules;
+      const MetadataReader = getMetadataReader();
 
       const newFiles: AppFile[] = [];
 
@@ -209,8 +212,8 @@ function App(): React.JSX.Element {
             date: formatExifDate(meta.date),
             size: sizeStr,
             hasXmp: meta.hasGps || false, // Mapping hasGps to hasXmp temporarily for UI
-            width: meta.width,
-            height: meta.height,
+            width: meta.width || undefined,
+            height: meta.height || undefined,
             rawMetadata: meta,
             rawExifOutput: undefined, // Let the lazy loader handle it
           });
@@ -251,10 +254,12 @@ function App(): React.JSX.Element {
 
     setIsProcessing(true);
     setInspectorTab('queue'); // Switch to queue tab to show activity
+    const ToolbarProgress = getToolbarProgress();
     ToolbarProgress.setProgress(10); // Start indeterminate-like progress
 
     try {
-      const { ExifToolRunner, MetadataReader } = NativeModules;
+      const ExifToolRunner = getExifToolRunner();
+      const MetadataReader = getMetadataReader();
       const filePaths = filesToFix.map(f => f.path);
 
       const args = [
@@ -298,6 +303,7 @@ function App(): React.JSX.Element {
 
       setTimeout(() => {
         setIsProcessing(false);
+        const ToolbarProgress = getToolbarProgress();
         ToolbarProgress.setProgress(0);
       }, 500);
 
@@ -305,6 +311,7 @@ function App(): React.JSX.Element {
       console.error('Batch fix dates failed:', error);
       Alert.alert(t('alert.error.title'), t('alert.error.body'));
       setIsProcessing(false);
+      const ToolbarProgress = getToolbarProgress();
       ToolbarProgress.setProgress(0);
     }
   };
@@ -497,12 +504,12 @@ function App(): React.JSX.Element {
     let rowBackgroundColor: any = 'transparent';
 
     if (isSelected) {
-      rowBackgroundColor = PlatformColor('selectedContentBackgroundColor');
+      rowBackgroundColor = C.selectedContentBackgroundColor;
     } else if (isHighlightActive && !isFilterActive && matchesCriteria) {
       // Only highlight when not in filter mode
       rowBackgroundColor = 'rgba(255, 59, 48, 0.2)';
     } else if (index % 2 === 1) {
-      rowBackgroundColor = PlatformColor('alternatingContentBackgroundColor');
+      rowBackgroundColor = C.alternatingContentBackgroundColor;
     }
 
     // Determine what URLs to drag. If the user drags a row that isn't selected,
@@ -533,26 +540,26 @@ function App(): React.JSX.Element {
               resizeMode="contain"
             />
           </View>
-          <Text style={[styles.cell, styles.cellName, { color: isSelected ? PlatformColor('alternateSelectedControlTextColor') : PlatformColor('controlTextColor') }]} numberOfLines={1} ellipsizeMode="middle">
+          <Text style={[styles.cell, styles.cellName, { color: isSelected ? C.alternateSelectedControlTextColor : C.controlTextColor }]} numberOfLines={1} ellipsizeMode="middle">
             {item.name}
           </Text>
           <Text style={[
             styles.cell,
             styles.cellDate,
             {
-              color: isSelected ? PlatformColor('alternateSelectedControlTextColor') : (isMissingDate ? PlatformColor('systemOrangeColor') : PlatformColor('controlTextColor')),
+              color: isSelected ? C.alternateSelectedControlTextColor : (isMissingDate ? C.systemOrangeColor : C.controlTextColor),
               fontWeight: isMissingDate ? '600' : 'normal'
             }
           ]}>
             {item.date === 'NO_DATE' ? t('noDate') : item.date}
           </Text>
-          <Text style={[styles.cell, styles.cellSize, { color: isSelected ? PlatformColor('alternateSelectedControlTextColor') : PlatformColor('secondaryLabelColor') }]}>
+          <Text style={[styles.cell, styles.cellSize, { color: isSelected ? C.alternateSelectedControlTextColor : C.secondaryLabelColor }]}>
             {item.size}
           </Text>
           <Text style={[
             styles.cell,
             styles.cellXmp,
-            { color: isSelected ? PlatformColor('alternateSelectedControlTextColor') : (item.hasXmp ? PlatformColor('systemGreenColor') : PlatformColor('secondaryLabelColor')) }
+            { color: isSelected ? C.alternateSelectedControlTextColor : (item.hasXmp ? C.systemGreenColor : C.secondaryLabelColor) }
           ]}>
             {item.hasXmp ? '✓' : '-'}
           </Text>
@@ -584,7 +591,7 @@ function App(): React.JSX.Element {
           {files.length === 0 ? (
             <View style={styles.emptyStateContainer}>
               <View style={styles.emptyStateIconPlaceholder}>
-                <Text style={{ fontSize: 54, fontWeight: '200', color: PlatformColor('tertiaryLabelColor') }}>
+                <Text style={{ fontSize: 54, fontWeight: '200', color: C.tertiaryLabelColor }}>
                   {appMode === 'metadata' && '􀫊'}
                   {appMode === 'avif' && '􀈄'}
                   {appMode === 'hash' && '􀈷'}
@@ -604,9 +611,9 @@ function App(): React.JSX.Element {
           ) : appMode !== 'metadata' ? (
             <View style={styles.galleryContainer}>
               <Text style={styles.galleryText}>{appMode === 'avif' ? 'AVIF Converter' : 'Hasher'}</Text>
-              <View style={{ marginTop: 16, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: PlatformColor('controlBackgroundColor'), borderRadius: 6, borderWidth: 1, borderColor: PlatformColor('separatorColor') }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabelColor') }}>{t('wip.title')}</Text>
-                <Text style={{ fontSize: 11, color: PlatformColor('tertiaryLabelColor'), marginTop: 2 }}>{t('wip.body')}</Text>
+              <View style={{ marginTop: 16, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.controlBackgroundColor, borderRadius: 6, borderWidth: 1, borderColor: C.separatorColor }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: C.secondaryLabelColor }}>{t('wip.title')}</Text>
+                <Text style={{ fontSize: 11, color: C.tertiaryLabelColor, marginTop: 2 }}>{t('wip.body')}</Text>
               </View>
             </View>
           ) : viewMode === 'list' ? (
@@ -629,9 +636,9 @@ function App(): React.JSX.Element {
           ) : (
             <View style={styles.galleryContainer}>
               <Text style={styles.galleryText}>{t('gallery.placeholder')}</Text>
-              <View style={{ marginTop: 16, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: PlatformColor('controlBackgroundColor'), borderRadius: 6, borderWidth: 1, borderColor: PlatformColor('separatorColor') }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabelColor') }}>{t('wip.title')}</Text>
-                <Text style={{ fontSize: 11, color: PlatformColor('tertiaryLabelColor'), marginTop: 2 }}>{t('wip.body')}</Text>
+              <View style={{ marginTop: 16, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.controlBackgroundColor, borderRadius: 6, borderWidth: 1, borderColor: C.separatorColor }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: C.secondaryLabelColor }}>{t('wip.title')}</Text>
+                <Text style={{ fontSize: 11, color: C.tertiaryLabelColor, marginTop: 2 }}>{t('wip.body')}</Text>
               </View>
             </View>
           )}
@@ -689,9 +696,9 @@ function App(): React.JSX.Element {
 
                         {activePreviewItem.rawExifOutput && (
                           <View style={{ marginTop: 16 }}>
-                            <Text style={{ fontWeight: 'bold', marginBottom: 4, color: PlatformColor('labelColor') }}>{t('preview.exifTitle')}:</Text>
-                            <ScrollView style={{ height: 200, backgroundColor: PlatformColor('textBackgroundColor'), padding: 8, borderRadius: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: PlatformColor('separatorColor') }}>
-                              <Text style={{ fontSize: 11, fontFamily: 'Menlo', color: PlatformColor('textColor') }}>{activePreviewItem.rawExifOutput}</Text>
+                            <Text style={{ fontWeight: 'bold', marginBottom: 4, color: C.labelColor }}>{t('preview.exifTitle')}:</Text>
+                            <ScrollView style={{ height: 200, backgroundColor: C.textBackgroundColor, padding: 8, borderRadius: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.separatorColor }}>
+                              <Text style={{ fontSize: 11, fontFamily: Platform.OS === 'macos' ? 'Menlo' : 'Consolas', color: C.textColor }}>{activePreviewItem.rawExifOutput}</Text>
                             </ScrollView>
                           </View>
                         )}
@@ -715,7 +722,7 @@ function App(): React.JSX.Element {
                     </View>
 
                     <View style={styles.settingRow}>
-                      <Text style={[styles.settingLabel, { color: isFilterActive ? PlatformColor('tertiaryLabelColor') : PlatformColor('labelColor') }]} numberOfLines={1}>{t('organize.highlight')}</Text>
+                      <Text style={[styles.settingLabel, { color: isFilterActive ? C.tertiaryLabelColor : C.labelColor }]} numberOfLines={1}>{t('organize.highlight')}</Text>
                       <Switch
                         value={isHighlightActive}
                         onValueChange={setIsHighlightActive}
@@ -750,7 +757,7 @@ function App(): React.JSX.Element {
                         />
                       </View>
 
-                      <Text style={[styles.settingLabel, { fontSize: 11, color: PlatformColor('tertiaryLabelColor') }]}>
+                      <Text style={[styles.settingLabel, { fontSize: 11, color: C.tertiaryLabelColor }]}>
                         {t('organize.stats', { shown: filteredFiles.length, selected: selectedIds.size })}
                       </Text>
                     </View>
@@ -789,9 +796,9 @@ function App(): React.JSX.Element {
 
                     {/* Show WIP placeholder layout when not exactly metadata */}
                     {appMode !== 'metadata' && (
-                      <View style={{ marginTop: 24, padding: 12, backgroundColor: PlatformColor('controlBackgroundColor'), borderRadius: 6, borderWidth: 1, borderColor: PlatformColor('separatorColor') }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabelColor') }}>{t('wip.title')}</Text>
-                        <Text style={{ fontSize: 11, color: PlatformColor('tertiaryLabelColor'), marginTop: 2 }}>{t('wip.body')}</Text>
+                      <View style={{ marginTop: 24, padding: 12, backgroundColor: C.controlBackgroundColor, borderRadius: 6, borderWidth: 1, borderColor: C.separatorColor }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: C.secondaryLabelColor }}>{t('wip.title')}</Text>
+                        <Text style={{ fontSize: 11, color: C.tertiaryLabelColor, marginTop: 2 }}>{t('wip.body')}</Text>
                       </View>
                     )}
                   </View>
@@ -801,9 +808,9 @@ function App(): React.JSX.Element {
                   <View style={styles.tabContent}>
                     <Text style={styles.inspectorTitle}>{t('queue.title')}</Text>
                     <Text style={styles.metadataValue}>{t('queue.ready')}</Text>
-                    <View style={{ marginTop: 16, padding: 12, backgroundColor: PlatformColor('controlBackgroundColor'), borderRadius: 6, borderWidth: 1, borderColor: PlatformColor('separatorColor') }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: PlatformColor('secondaryLabelColor') }}>{t('wip.title')}</Text>
-                      <Text style={{ fontSize: 11, color: PlatformColor('tertiaryLabelColor'), marginTop: 2 }}>{t('wip.body')}</Text>
+                    <View style={{ marginTop: 16, padding: 12, backgroundColor: C.controlBackgroundColor, borderRadius: 6, borderWidth: 1, borderColor: C.separatorColor }}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: C.secondaryLabelColor }}>{t('wip.title')}</Text>
+                      <Text style={{ fontSize: 11, color: C.tertiaryLabelColor, marginTop: 2 }}>{t('wip.body')}</Text>
                     </View>
                   </View>
                 )}
@@ -827,7 +834,7 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlatformColor('windowBackgroundColor'),
+    backgroundColor: C.windowBackgroundColor,
   },
   splitContainer: {
     flex: 1,
@@ -835,13 +842,13 @@ const styles = StyleSheet.create({
   },
   mainPane: {
     flex: 1,
-    backgroundColor: PlatformColor('controlBackgroundColor'),
+    backgroundColor: C.controlBackgroundColor,
   },
   inspectorPane: {
     width: 280,
     borderLeftWidth: StyleSheet.hairlineWidth,
-    borderLeftColor: PlatformColor('separatorColor'),
-    backgroundColor: PlatformColor('windowBackgroundColor'),
+    borderLeftColor: C.separatorColor,
+    backgroundColor: C.windowBackgroundColor,
   },
   inspectorScroll: {
     flex: 1,
@@ -855,20 +862,20 @@ const styles = StyleSheet.create({
   previewImagePlaceholder: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: PlatformColor('underPageBackgroundColor'),
+    backgroundColor: C.underPageBackgroundColor,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
   previewPlaceholderText: {
-    color: PlatformColor('tertiaryLabelColor'),
+    color: C.tertiaryLabelColor,
     fontSize: 14,
   },
   inspectorTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: PlatformColor('labelColor'),
+    color: C.labelColor,
     marginBottom: 16,
   },
   metadataRow: {
@@ -877,12 +884,12 @@ const styles = StyleSheet.create({
   },
   metadataLabel: {
     flex: 1,
-    color: PlatformColor('secondaryLabelColor'),
+    color: C.secondaryLabelColor,
     fontSize: 12,
   },
   metadataValue: {
     flex: 2,
-    color: PlatformColor('labelColor'),
+    color: C.labelColor,
     fontSize: 12,
   },
   settingRow: {
@@ -893,12 +900,12 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 13,
-    color: PlatformColor('labelColor'),
+    color: C.labelColor,
   },
   nativeButton: {
-    backgroundColor: PlatformColor('controlBackgroundColor'),
+    backgroundColor: C.controlBackgroundColor,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: PlatformColor('separatorColor'),
+    borderColor: C.separatorColor,
     borderRadius: 5,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -906,7 +913,7 @@ const styles = StyleSheet.create({
   },
   nativeButtonText: {
     fontSize: 13,
-    color: PlatformColor('labelColor'),
+    color: C.labelColor,
   },
   inspectorEmpty: {
     flex: 1,
@@ -914,14 +921,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inspectorEmptyText: {
-    color: PlatformColor('tertiaryLabelColor'),
+    color: C.tertiaryLabelColor,
     fontSize: 13,
   },
   emptyStateContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: PlatformColor('controlBackgroundColor'),
+    backgroundColor: C.controlBackgroundColor,
     padding: 32,
   },
   emptyStateIconPlaceholder: {
@@ -931,13 +938,13 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: PlatformColor('secondaryLabelColor'),
+    color: C.secondaryLabelColor,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyStateSubtext: {
     fontSize: 13,
-    color: PlatformColor('tertiaryLabelColor'),
+    color: C.tertiaryLabelColor,
     textAlign: 'center',
     maxWidth: 300,
   },
@@ -949,11 +956,11 @@ const styles = StyleSheet.create({
   columnHeader: {
     fontWeight: '600',
     fontSize: 12,
-    color: PlatformColor('secondaryLabelColor'),
+    color: C.secondaryLabelColor,
   },
   listContent: {
     paddingBottom: 20,
-    backgroundColor: PlatformColor('controlBackgroundColor'),
+    backgroundColor: C.controlBackgroundColor,
   },
   row: {
     flexDirection: 'row',
@@ -986,7 +993,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: PlatformColor('underPageBackgroundColor'),
+    backgroundColor: C.underPageBackgroundColor,
   },
   galleryText: {
     fontSize: 16,
