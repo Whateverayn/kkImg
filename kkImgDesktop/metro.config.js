@@ -1,12 +1,17 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
 const fs = require('fs');
 const path = require('path');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 
-const rnwPath = fs.realpathSync(
-  path.resolve(require.resolve('react-native-windows/package.json'), '..'),
-);
+let rnwPath = null;
+try {
+  rnwPath = fs.realpathSync(
+    path.resolve(require.resolve('react-native-windows/package.json'), '..'),
+  );
+} catch (e) {
+  // react-native-windows not installed, which is fine on non-Windows platforms
+}
 
 /**
  * Metro configuration
@@ -22,9 +27,13 @@ const config = {
       new RegExp(
         `${path.resolve(__dirname, 'windows').replace(/[/\\]/g, '/')}.*`,
       ),
-      // This prevents "react-native run-windows" from hitting: EBUSY: resource busy or locked, open msbuild.ProjectImports.zip or other files produced by msbuild
-      new RegExp(`${rnwPath}/build/.*`),
-      new RegExp(`${rnwPath}/target/.*`),
+      ...(rnwPath
+        ? [
+          // This prevents "react-native run-windows" from hitting: EBUSY: resource busy or locked, open msbuild.ProjectImports.zip or other files produced by msbuild
+          new RegExp(`${rnwPath}/build/.*`),
+          new RegExp(`${rnwPath}/target/.*`),
+        ]
+        : []),
       /.*\.ProjectImports\.zip/,
     ]),
   },
