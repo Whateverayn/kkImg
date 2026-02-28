@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="App1N.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App1N">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <!-- Other merged dictionaries here -->
+                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Other app resources here -->
+            <x:Double x:Key="NavigationViewItemOnLeftMinHeight">24</x:Double>
+
+            <FontFamily x:Key="MyAppFontFamily">ヒラギノ角ゴ ProN, Malgun Gothic</FontFamily>
+            <StaticResource x:Key="ContentControlThemeFontFamily" ResourceKey="MyAppFontFamily" />
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource MyAppFontFamily}"/>
+            </Style>
+            <Style TargetType="Control">
+                <Setter Property="FontFamily" Value="{StaticResource MyAppFontFamily}"/>
+            </Style>
+
+            <!--<Style TargetType="MenuFlyoutSubItem">
+                <Setter Property="FontFamily" Value="{StaticResource MyAppFontFamily}" />
+                --><!--<Setter Property="MinHeight" Value="0"/>-->
+                <!--<Setter Property="Padding" Value="0,0,0,0"/>--><!--
+            </Style>-->
+
+            <Style TargetType="MenuBar">
+                <Setter Property="MinHeight" Value="0"/>
+            </Style>
+
+            <Style TargetType="MenuBarItem">
+                <Setter Property="MinHeight" Value="0"/>
+                <Setter Property="Padding" Value="0,0,0,0"/>
+            </Style>
+
+            <Style TargetType="MenuFlyoutItem" BasedOn="{StaticResource DefaultMenuFlyoutItemStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource MyAppFontFamily}"/>
+                <Setter Property="MinHeight" Value="0"/>
+            </Style>
+            
+            <Style TargetType="MenuFlyoutPresenter">
+                <Setter Property="MinHeight" Value="0"/>
+            </Style>
+
+            <local:MainViewModel x:Key="MainViewModel" />
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
