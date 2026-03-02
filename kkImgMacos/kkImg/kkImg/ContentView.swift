@@ -17,7 +17,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            MainContentView(mode: $selectedTab, view: $viewMode)
+            MainContentView(viewModel: KKViewModel(), mode: $selectedTab, view: $viewMode)
         }
         .toolbar {
             MainToolbar(mode: $selectedTab, view: $viewMode)
