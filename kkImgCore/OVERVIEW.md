@@ -88,11 +88,25 @@ struct ExifToolLog {
 
 ---
 
+## 永続セッション処理の流れ (`ExifToolSession`)
+
+`ExifToolRunner` が1ファイル/1コマンドごとにプロセスを起動・終了するのに対し、`ExifToolSession` は `exiftool -stay_open True -@ -` モードを利用し、ひとつのプロセスを常駐させます。
+数千枚のファイルを処理する場合など、パフォーマンスが求められるシナリオ（特にWindows環境などでのプロセス起動コスト削減）で利用します。
+
+1. `let session = ExifToolSession()` でインスタンスを生成
+2. `try await session.execute(args:)` を実行（內部で初回のみプロセス起動）
+3. パイプ経由でコマンドを送信し、非同期で `stdout` / `stderr` を読み取って結果を返す
+4. `await session.stop()` でプロセスを正常終了させる
+
+---
+
 ## C API（Windows向け）
 
-`CExports.swift` にて `@_cdecl` で以下の2関数を公開している。
+`CExports.swift` にて `@_cdecl` で以下の関数群を公開している。
 
-### `kkimg_exiftool_execute(args_json)`
+### 1-shot実行API (旧来)
+
+#### `kkimg_exiftool_execute(args_json)`
 
 ```
 入力: JSON配列文字列 例: "["-T", "-DateTimeOriginal", "/path/to/photo.jpg"]"
@@ -101,11 +115,25 @@ struct ExifToolLog {
 
 - 同期（ブロッキング）で実行される
 - 呼び出し元が戻り値のポインタを `kkimg_free_string()` で解放する責任を持つ
-- エラー時も `{"stdout":"","stderr":"エラー内容","exitCode":-1}` 形式で返す（NULL は返さない、ただしメモリ確保失敗時のみ NULL）
 
-### `kkimg_free_string(ptr)`
+### Session API (stay_open モード利用)
 
-`kkimg_exiftool_execute` が返したポインタを解放する。必ず呼ぶこと。
+#### `kkimg_exiftool_session_start()`
+セッションを開始し、`ExifToolSession` インスタンスの不透明ポインタ (`IntPtr`) を返す。
+
+#### `kkimg_exiftool_session_execute(session_ptr, args_json)`
+保持しているセッションポインタを利用してコマンドを実行する。戻り値の形式・扱いは `kkimg_exiftool_execute` と同じ（都度 `kkimg_free_string` で解放が必要）。UIを1件ずつ更新するのに適している。
+
+#### `kkimg_exiftool_session_stop(session_ptr)`
+セッションを終了させ、インスタンスのメモリを解放する。
+
+---
+
+### 共通関数
+
+#### `kkimg_free_string(ptr)`
+
+`execute` メソッド群が返したJSON結果のポインタを解放する。必ず呼ぶこと。
 
 ---
 
@@ -168,7 +196,8 @@ kkImgCore/
 │   └── kkImgCore.h                        C言語ヘッダー（DllImport用）
 ├── Sources/
 │   ├── kkImgCore/
-│   │   ├── ExifToolRunner.swift           exiftool実行ロジック（メイン）
+│   │   ├── ExifToolRunner.swift           1-shotのexiftool実行ロジック
+│   │   ├── ExifToolSession.swift          stay_openモードを利用する永続セッション
 │   │   └── CExports.swift                 @_cdecl C API（Windows向け）
 │   └── kkImgCoreCLI/
 │       └── main.swift                     動作確認用CLIツール
@@ -183,14 +212,29 @@ kkImgCore/
 using System.Runtime.InteropServices;
 
 [DllImport("kkImgCore")]
-static extern IntPtr kkimg_exiftool_execute(string argsJson);
+static extern IntPtr kkimg_exiftool_session_start();
+
+[DllImport("kkImgCore")]
+static extern IntPtr kkimg_exiftool_session_execute(IntPtr sessionPtr, string argsJson);
+
+[DllImport("kkImgCore")]
+static extern void kkimg_exiftool_session_stop(IntPtr sessionPtr);
 
 [DllImport("kkImgCore")]
 static extern void kkimg_free_string(IntPtr ptr);
 
 // 使用例
-var ptr = kkimg_exiftool_execute("[\"-ver\"]");
-var json = Marshal.PtrToStringUTF8(ptr)!;
-kkimg_free_string(ptr);
-// json == {"stdout":"13.29\n","stderr":"","exitCode":0}
+var sessionPtr = kkimg_exiftool_session_start();
+
+var resPtr1 = kkimg_exiftool_session_execute(sessionPtr, "[\"-j\", \"file1.jpg\"]");
+var json1 = Marshal.PtrToStringUTF8(resPtr1)!;
+kkimg_free_string(resPtr1);
+// json1 を利用してUIを更新
+
+var resPtr2 = kkimg_exiftool_session_execute(sessionPtr, "[\"-j\", \"file2.jpg\"]");
+var json2 = Marshal.PtrToStringUTF8(resPtr2)!;
+kkimg_free_string(resPtr2);
+// json2 を利用してUIを更新
+
+kkimg_exiftool_session_stop(sessionPtr);
 ```

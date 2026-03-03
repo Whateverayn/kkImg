@@ -55,6 +55,71 @@ public func kkimg_free_string(_ ptr: UnsafeMutablePointer<CChar>?) {
     ptr?.deallocate()
 }
 
+// MARK: - ExifTool Session C API
+
+@_cdecl("kkimg_exiftool_session_start")
+public func kkimg_exiftool_session_start() -> UnsafeMutableRawPointer {
+    let session = ExifToolSession()
+    // Retain the object and return an opaque pointer
+    let unmanaged = Unmanaged.passRetained(session)
+    return unmanaged.toOpaque()
+}
+
+@_cdecl("kkimg_exiftool_session_execute")
+public func kkimg_exiftool_session_execute(
+    _ sessionPtr: UnsafeMutableRawPointer?,
+    _ argsJsonPtr: UnsafePointer<CChar>?
+) -> UnsafeMutablePointer<CChar>? {
+    guard let sessionPtr else {
+        return makeErrorJSON("session_ptr is null")
+    }
+    guard let argsJsonPtr else {
+        return makeErrorJSON("args_json is null")
+    }
+
+    let session = Unmanaged<ExifToolSession>.fromOpaque(sessionPtr).takeUnretainedValue()
+    let argsJsonString = String(cString: argsJsonPtr)
+
+    guard
+        let data = argsJsonString.data(using: .utf8),
+        let args = try? JSONDecoder().decode([String].self, from: data)
+    else {
+        return makeErrorJSON("Invalid JSON: expected array of strings")
+    }
+
+    let semaphore = DispatchSemaphore(value: 0)
+    var resultJSON: String = "{\"stdout\":\"\",\"stderr\":\"Internal error\",\"exitCode\":-1}"
+
+    Task {
+        do {
+            let result = try await session.execute(args: args)
+            resultJSON = encodeResult(result)
+        } catch let e as ExifToolError {
+            resultJSON = encodeError(e)
+        } catch {
+            resultJSON = makeErrorString(error.localizedDescription)
+        }
+        semaphore.signal()
+    }
+
+    semaphore.wait()
+    return duplicateCString(resultJSON)
+}
+
+@_cdecl("kkimg_exiftool_session_stop")
+public func kkimg_exiftool_session_stop(_ sessionPtr: UnsafeMutableRawPointer?) {
+    guard let sessionPtr else { return }
+    let unmanaged = Unmanaged<ExifToolSession>.fromOpaque(sessionPtr)
+    let session = unmanaged.takeRetainedValue() // release balance
+    
+    let semaphore = DispatchSemaphore(value: 0)
+    Task {
+        await session.stop()
+        semaphore.signal()
+    }
+    semaphore.wait()
+}
+
 // MARK: - Helpers
 
 private func encodeResult(_ result: ExifToolResult) -> String {
