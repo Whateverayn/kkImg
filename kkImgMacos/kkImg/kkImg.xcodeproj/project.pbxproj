@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F30D15232F56D2C30076F278 /* kkImgCore in Frameworks */ = {isa = PBXBuildFile; productRef = F30D15222F56D2C30076F278 /* kkImgCore */; };
+		F30D15242F56D2C30076F278 /* kkImgCore in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F30D15222F56D2C30076F278 /* kkImgCore */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F3C5A5312F530D740086C54D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -23,7 +28,22 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		F30D15252F56D2C30076F278 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F30D15242F56D2C30076F278 /* kkImgCore in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		F30D15212F56D2AD0076F278 /* kkImgCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = kkImgCore; path = ../../kkImgCore; sourceTree = "<group>"; };
 		F3C5A5232F530D720086C54D /* kkImg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kkImg.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3C5A5302F530D740086C54D /* kkImgTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kkImgTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3C5A53A2F530D740086C54D /* kkImgUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kkImgUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F30D15232F56D2C30076F278 /* kkImgCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +93,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F30D15202F56D2AD0076F278 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F30D15212F56D2AD0076F278 /* kkImgCore */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F3C5A51A2F530D720086C54D = {
 			isa = PBXGroup;
 			children = (
 				F3C5A5252F530D720086C54D /* kkImg */,
 				F3C5A5332F530D740086C54D /* kkImgTests */,
 				F3C5A53D2F530D740086C54D /* kkImgUITests */,
+				F30D15202F56D2AD0076F278 /* Frameworks */,
 				F3C5A5242F530D720086C54D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -102,6 +132,7 @@
 				F3C5A51F2F530D720086C54D /* Sources */,
 				F3C5A5202F530D720086C54D /* Frameworks */,
 				F3C5A5212F530D720086C54D /* Resources */,
+				F30D15252F56D2C30076F278 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -112,6 +143,7 @@
 			);
 			name = kkImg;
 			packageProductDependencies = (
+				F30D15222F56D2C30076F278 /* kkImgCore */,
 			);
 			productName = kkImg;
 			productReference = F3C5A5232F530D720086C54D /* kkImg.app */;
@@ -566,6 +598,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F30D15222F56D2C30076F278 /* kkImgCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = kkImgCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F3C5A51B2F530D720086C54D /* Project object */;
 }

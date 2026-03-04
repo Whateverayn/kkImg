@@ -49,30 +49,37 @@ struct MainContentView: View {
         Table(viewModel.items) {
             TableColumn("Name") {item in
                 HStack {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
-                        .resizable()
-                        .frame(width: 16, height: 16)
+                    if let thumb = item.thumbnail {
+                        Image(nsImage: thumb)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 16, height: 16)
+                            .cornerRadius(2)
+                    } else {
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 16, height: 16)
+                    }
                     Text(item.url.lastPathComponent)
                 }
             }
             
-            TableColumn("Format") {item in
+            TableColumn("DateTimeOriginal") {item in
                 if item.loadingStatus.isLoading {
                     ProgressView()
                         .controlSize(.small)
                 } else {
-                    Text(item.exifData?.format ?? "Unknown")
+                    Text(item.exifData?.dateTimeOriginal ?? "Unknown")
                 }
             }
             
-            TableColumn("Dimensions") { item in
+            TableColumn("GPSPosition") { item in
                 if item.loadingStatus.isLoading {
                     ProgressView()
                         .controlSize(.small)
-                } else if let exif = item.exifData {
-                    Text("\(exif.width ?? 0) × \(exif.height ?? 0)")
                 } else {
-                    Text("Unknown")
+                    Text(item.exifData?.gpsPosition ?? "Unknown")
                 }
             }
         }

@@ -205,6 +205,33 @@ kkImgCore/
     └── kkImgCoreTests/
         └── ExifToolRunnerTests.swift      ユニットテスト
 ```
+## Swift (macOS / iOS) での使用例
+
+Swift環境からは、`ExifToolSession` Actor をそのまま利用できます。Async/Await ベースで直感的に結果を受け取ることができます。
+
+```swift
+import kkImgCore
+
+Task {
+    // セッションのインスタンスを作成
+    let session = ExifToolSession()
+    
+    do {
+        // 1ファイル目の実行（初回は自動的にプロセスが起動します）
+        let result1 = try await session.execute(args: ["-j", "file1.jpg"])
+        print("Stdout1:", result1.stdout) // JSON形式のメタデータ
+        
+        // 2ファイル目の実行
+        let result2 = try await session.execute(args: ["-T", "-DateTimeOriginal", "file2.jpg"])
+        print("Stdout2:", result2.stdout)
+        
+        // 不要になったら stop() を呼んでプロセスを終了させます
+        await session.stop()
+    } catch {
+        print("ExifTool session error: \(error)")
+    }
+}
+```
 
 ## C# での使用例
 

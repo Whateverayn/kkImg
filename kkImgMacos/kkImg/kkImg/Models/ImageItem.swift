@@ -6,42 +6,13 @@
 //
 
 import Foundation
+import AppKit
 
 struct KKExifData {
-    var width: Int?
-    var height: Int?
-    var format: String?
-    var aperture: Double?
-    var shutterSpeed: Double?
-    var iso: Int?
-    var make: String?
-    var model: String?
-    var flash: String?
-    var exposureMode: String?
-    var whiteBalance: String?
-    var exposureProgram: String?
-    var lensModel: String?
-    var dateTimeOriginal: Date?
-    var copyright: String?
-    var location: String?
-    var lensSpecification: String?
-    var sceneType: String?
-    var sceneCaptureType: String?
-    var lensSpecificationInfo: String?
-    var lensMake: String?
-    var lensModelInfo: String?
-    var lensSpecificationVersion: String?
-    var lensMakeVersion: String?
-    var lensSerialNumber: String?
-    var lensVersion: String?
-    var lensSpecificationSerialNumber: String?
-    var lensMakeSerialNumber: String?
-    var lensVersionSerialNumber: String?
-    var lensMakeVersionSerialNumber: String?
-    var lensSerialNumberSerialNumber: String?
-    var lensVersionSerialNumberSerialNumber: String?
-    var lensMakeVersionSerialNumberSerialNumber: String?
-    var lensSpecificationSerialNumberSerialNumber: String?
+    var rawData: [String: Any] = [:]
+    
+    var dateTimeOriginal: String? { rawData["DateTimeOriginal"] as? String }
+    var gpsPosition: String? { rawData["GPSPosition"] as? String }
 }
 
 enum KKLoadingStatus {
@@ -61,4 +32,5 @@ struct ImageItem: Identifiable {
     var url: URL
     var exifData: KKExifData?
     var loadingStatus: KKLoadingStatus = .pending
+    var thumbnail: NSImage?
 }

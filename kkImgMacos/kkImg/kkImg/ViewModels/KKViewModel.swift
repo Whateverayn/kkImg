@@ -6,10 +6,19 @@
 //
 
 import Foundation
+import AppKit
+import QuickLookThumbnailing
+
+import kkImgCore
 
 @Observable
 class KKViewModel {
     var items: [ImageItem] = []
+    
+    private let exifSession = ExifToolSession(exiftoolPath: "/usr/local/bin/exiftool")
+    
+    private var analysisQueue: [UUID] = []
+    private var isProcessing = false
     
     func handleDrop(providers: [NSItemProvider]) {
         for provider in providers {
@@ -21,9 +30,10 @@ class KKViewModel {
                             // リストに追加
                             let newItem = ImageItem(url: url)
                             self.items.append(newItem)
+                            // サムネイル
+                            self.generateThumbnail(for: newItem.id)
                             
-                            // 解析開始
-                            self.startAnalyzing(itemid: newItem.id)
+                            self.enqueueAnalysis(itemid: newItem.id)
                         }
                     }
                 }
@@ -31,24 +41,86 @@ class KKViewModel {
         }
     }
     
-    private func startAnalyzing(itemid: UUID) {
-        guard let index = items.firstIndex(where: { $0.id == itemid }) else { return }
+    private func enqueueAnalysis(itemid: UUID) {
+        analysisQueue.append(itemid)
+        processQueue()
+    }
+    
+    private func processQueue() {
+        // すでに実行中, もしくはキューが空なら何もしない
+        guard !isProcessing, !analysisQueue.isEmpty else { return }
         
-        // ステータスを解析中にする
-        items[index].loadingStatus = .loading
+        isProcessing = true
+        let nextItemId = analysisQueue.removeFirst()
         
         Task {
-            try? await Task.sleep(for: .seconds(Double.random(in: 0.5...2.0)))
+            print("Analyzing... \(nextItemId)")
             
+            defer {
+                Task { @MainActor in
+                    print("Analysis done. \(nextItemId)")
+                    isProcessing = false
+                    processQueue() // 次の項目があれば実行
+                }
+            }
+            
+            await performAnalysis(itemid: nextItemId)
+        }
+    }
+    
+    private func performAnalysis(itemid: UUID) async {
+        guard let index = items.firstIndex(where: { $0.id == itemid }) else { return }
+        let url = items[index].url
+        // ステータスを解析中にする
+        await MainActor.run { items[index].loadingStatus = .loading }
+        
+        do {
+            print("Sending EXIF request for \(url.path)...")
+            // -j で全部取得, -n で数値形式
+            let result = try await exifSession.execute(args: ["-j", "-n", "-DateTimeOriginal", url.path])
+            print("Received EXIF data successfully.")
+            if result.succeeded, let data = result.stdout.data(using: .utf8) {
+                // json配列としてパース
+                if let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+                   let fullMetadata = jsonArray.first {
+                    await MainActor.run {
+                        if let idx = self.items.firstIndex(where: { $0.id == itemid }) {
+                            print("Updating EXIF data... (ID: \(itemid))")
+                            self.items[idx].exifData = KKExifData(rawData: fullMetadata)
+                            self.items[idx].loadingStatus = .completed
+                        }
+                    }
+                }
+            }
+        } catch {
+            print("Failed to parse EXIF data: \(error)")
             await MainActor.run {
                 if let idx = self.items.firstIndex(where: { $0.id == itemid }) {
-                    // 解析結果を埋めて完了にする
-                    self.items[idx].exifData = KKExifData(
-                        width: Int.random(in: 100...1000),
-                        height: Int.random(in: 100...1000),
-                        format: self.items[idx].url.pathExtension.uppercased(),
-                    )
-                    self.items[idx].loadingStatus = .completed
+                    self.items[idx].loadingStatus = .failed(error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    func stopSession() async {
+        await exifSession.stop()
+    }
+}
+
+extension KKViewModel {
+    func generateThumbnail(for itemid: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == itemid }) else { return }
+        let url = items[index].url
+        
+        let size = CGSize(width: 32, height: 32)
+        let scale = NSScreen.main?.backingScaleFactor ?? 2.0
+        let request = QLThumbnailGenerator.Request(fileAt: url, size: size, scale: scale, representationTypes: .thumbnail)
+        
+        QLThumbnailGenerator.shared.generateRepresentations(for: request) { (representation, type, error) in
+            DispatchQueue.main.async {
+                if let thumbnail = representation?.nsImage,
+                   let idx = self.items.firstIndex(where: { $0.id == itemid }) {
+                    self.items[idx].thumbnail = thumbnail
                 }
             }
         }

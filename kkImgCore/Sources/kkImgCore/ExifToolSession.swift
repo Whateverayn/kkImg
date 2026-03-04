@@ -67,6 +67,12 @@ public actor ExifToolSession {
         task.standardInput = inPipe
         task.standardOutput = outPipe
         task.standardError = errPipe
+        
+        task.terminationHandler = { [weak self] p in
+            Task { [weak self] in
+                await self?.handleProcessTermination()
+            }
+        }
 
         do {
             try task.run()
@@ -78,8 +84,16 @@ public actor ExifToolSession {
         self.stdinPipe = inPipe
         self.stdoutPipe = outPipe
         self.stderrPipe = errPipe
-
+        
         startReadingOutput()
+    }
+    
+    private func handleProcessTermination() {
+        if let continuation = activeContinuation {
+            activeContinuation = nil
+            continuation.resume(throwing: ExifToolError.launchFailed("Process terminated unexpectedly"))
+        }
+        process = nil
     }
 
     private func startReadingOutput() {

@@ -9,15 +9,16 @@ import SwiftUI
 internal import UniformTypeIdentifiers
 
 struct ContentView: View {
+    var viewModel: KKViewModel
+    
     @State private var selectedTab: AppMode = .metadata
     @State private var viewMode: AppViewMode = .list
     @State private var inspectorTab: InspectorTab = .file
     @State private var isInspectorPresented: Bool = true
-    @State private var columnVisibility = NavigationSplitViewVisibility.detailOnly
     
     var body: some View {
         NavigationStack {
-            MainContentView(viewModel: KKViewModel(), mode: $selectedTab, view: $viewMode)
+            MainContentView(viewModel: viewModel, mode: $selectedTab, view: $viewMode)
         }
         .toolbar {
             MainToolbar(mode: $selectedTab, view: $viewMode)
@@ -29,5 +30,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    let mockViewModel = KKViewModel()
+    
+    ContentView(viewModel: mockViewModel)
 }
