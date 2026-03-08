@@ -35,7 +35,46 @@ public actor ExifToolSession {
 
     deinit {
         // Actor deinit cannot be async, so we just terminate the process directly if needed.
-        process?.terminate()
+        if let currentProcess = process, currentProcess.isRunning {
+            currentProcess.terminate()
+        }
+    }
+
+    private func resolveExiftoolPath() -> String? {
+        let defaultPaths = [
+            "/opt/homebrew/bin/exiftool",
+            "/usr/local/bin/exiftool",
+            "/opt/local/bin/exiftool",
+            "/usr/bin/exiftool"
+        ]
+        
+        // 1. Check if we can find it via sheer execution of `which`
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-l", "-c", "which exiftool"]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty, FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+        } catch {
+            // Fallback to default paths
+        }
+        
+        // 2. Fallback to default paths
+        for path in defaultPaths {
+            if FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+        }
+        return nil
     }
 
     /// プロセスを開始する (実行時に遅延初期化してもよいが、明示的に開始も可能)
@@ -46,9 +85,14 @@ public actor ExifToolSession {
         var taskArgs: [String] = []
 
         if exiftoolPath == "/usr/bin/env" {
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            taskArgs.append("exiftool")
-            taskArgs.append(contentsOf: ["-stay_open", "True", "-@", "-"])
+            if let resolved = resolveExiftoolPath() {
+                task.executableURL = URL(fileURLWithPath: resolved)
+                taskArgs.append(contentsOf: ["-stay_open", "True", "-@", "-"])
+            } else {
+                task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+                taskArgs.append("exiftool")
+                taskArgs.append(contentsOf: ["-stay_open", "True", "-@", "-"])
+            }
         } else if exiftoolPath.lowercased() == "cmd.exe" {
             task.executableURL = URL(fileURLWithPath: "cmd.exe")
             taskArgs.append("/c")
@@ -89,26 +133,72 @@ public actor ExifToolSession {
     }
     
     private func handleProcessTermination() {
+        let exitCode = process?.terminationStatus ?? -1
+        let reason = process?.terminationReason
+        
+        let errorDetails = "Process terminated unexpectedly (exitCode: \(exitCode), reason: \(String(describing: reason))). Stderr context: \(currentStderrBuffer.trimmingCharacters(in: .whitespacesAndNewlines))"
+        
         if let continuation = activeContinuation {
             activeContinuation = nil
-            continuation.resume(throwing: ExifToolError.launchFailed("Process terminated unexpectedly"))
+            continuation.resume(throwing: ExifToolError.launchFailed(errorDetails))
         }
         process = nil
     }
 
+    private var stdoutBuffer = Data()
+    private var stderrBuffer = Data()
+
     private func startReadingOutput() {
         guard let outPipe = stdoutPipe, let errPipe = stderrPipe else { return }
 
-        stdoutTask = Task {
-            for try await line in outPipe.fileHandleForReading.bytes.lines {
-                handleStdoutLine(line)
+        outPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            guard !data.isEmpty else {
+                handle.readabilityHandler = nil
+                Task { [weak self] in
+                    await self?.handlePipeEOF()
+                }
+                return
+            }
+            Task { [weak self] in
+                await self?.processStdoutData(data)
             }
         }
 
-        stderrTask = Task {
-            for try await line in errPipe.fileHandleForReading.bytes.lines {
-                handleStderrLine(line)
+        errPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            guard !data.isEmpty else {
+                handle.readabilityHandler = nil
+                Task { [weak self] in
+                    await self?.handlePipeEOF()
+                }
+                return
             }
+            Task { [weak self] in
+                await self?.processStderrData(data)
+            }
+        }
+    }
+
+    private func processStdoutData(_ data: Data) {
+        stdoutBuffer.append(data)
+        processBuffer(&stdoutBuffer, handler: handleStdoutLine)
+    }
+
+    private func processStderrData(_ data: Data) {
+        stderrBuffer.append(data)
+        processBuffer(&stderrBuffer, handler: handleStderrLine)
+    }
+
+    private func processBuffer(_ buffer: inout Data, handler: (String) -> Void) {
+        guard let newline = "\n".data(using: .utf8) else { return }
+        
+        while let range = buffer.range(of: newline) {
+            let lineData = buffer.subdata(in: 0..<range.lowerBound)
+            if let line = String(data: lineData, encoding: .utf8) {
+                handler(line)
+            }
+            buffer.removeSubrange(0..<range.upperBound)
         }
     }
 
@@ -134,6 +224,24 @@ public actor ExifToolSession {
         }
     }
 
+    private var eofCount = 0
+
+    private func handlePipeEOF() {
+        eofCount += 1
+        if eofCount >= 2 {
+            // Both stdout and stderr pipes are closed.
+            let exitCode = process?.terminationStatus ?? -1
+            let reason = process?.terminationReason
+            
+            let errorDetails = "Process terminated unexpectedly before completion (exitCode: \(exitCode), reason: \(String(describing: reason))). Stderr context: \(currentStderrBuffer.trimmingCharacters(in: .whitespacesAndNewlines))"
+            
+            if let continuation = activeContinuation {
+                activeContinuation = nil
+                continuation.resume(throwing: ExifToolError.launchFailed(errorDetails))
+            }
+        }
+    }
+
     private func checkCompletion() {
         if isStdoutReady && isStderrReady {
             if let continuation = activeContinuation {
@@ -147,27 +255,55 @@ public actor ExifToolSession {
         }
     }
 
+    private var isStopping = false
+
     /// セッションを終了する (-stay_open False を送信)
-    public func stop() {
-        guard process != nil, let inPipe = stdinPipe else { return }
+    public func stop() async {
+        guard !isStopping else { return }
+        isStopping = true
+
+        guard let currentProcess = process, let inPipe = stdinPipe else {
+            cleanUp()
+            return
+        }
+
         if let data = "-stay_open\nFalse\n".data(using: .utf8) {
             try? inPipe.fileHandleForWriting.write(contentsOf: data)
         }
         try? inPipe.fileHandleForWriting.close()
-        process?.waitUntilExit()
         
+        stdoutPipe?.fileHandleForReading.readabilityHandler = nil
+        stderrPipe?.fileHandleForReading.readabilityHandler = nil
+        
+        // ExifToolに終了の猶予を与える (正常終了を待つ)
+        var attempts = 0
+        while currentProcess.isRunning && attempts < 20 { // 最大2秒
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            attempts += 1
+        }
+        
+        // それでも居座る場合のみ強制終了 (保険)
+        if currentProcess.isRunning {
+             currentProcess.terminate()
+        }
+        
+        cleanUp()
+        
+        if let continuation = activeContinuation {
+            activeContinuation = nil
+            continuation.resume(throwing: ExifToolError.launchFailed("Session stopped by user"))
+        }
+    }
+
+    private func cleanUp() {
         process = nil
         stdinPipe = nil
         stdoutPipe = nil
         stderrPipe = nil
-        
-        stdoutTask?.cancel()
-        stderrTask?.cancel()
-        
-        if let continuation = activeContinuation {
-            activeContinuation = nil
-            continuation.resume(throwing: ExifToolError.launchFailed("Session stopped"))
-        }
+        isStdoutReady = false
+        isStderrReady = false
+        currentReadyToken = ""
+        eofCount = 0
     }
 
     /// args を実行して結果を待つ

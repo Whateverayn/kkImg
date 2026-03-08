@@ -10,13 +10,15 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     var viewModel: KKViewModel?
     
-    func applicationWillTerminate(_ notification: Notification) {
-        let semaphore = DispatchSemaphore(value: 0)
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let viewModel = viewModel else { return .terminateNow }
+        
         Task {
-            await self.viewModel?.stopSession()
-            semaphore.signal()
+            await viewModel.stopSession()
+            sender.reply(toApplicationShouldTerminate: true)
         }
-        _ = semaphore.wait(timeout: .now() + 5)
+        
+        return .terminateLater
     }
 }
 

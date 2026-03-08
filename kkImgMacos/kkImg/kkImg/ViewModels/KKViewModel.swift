@@ -15,7 +15,7 @@ import kkImgCore
 class KKViewModel {
     var items: [ImageItem] = []
     
-    private let exifSession = ExifToolSession(exiftoolPath: "/usr/local/bin/exiftool")
+    private let exifSession = ExifToolSession()
     
     private var analysisQueue: [UUID] = []
     private var isProcessing = false
@@ -77,7 +77,10 @@ class KKViewModel {
         do {
             print("Sending EXIF request for \(url.path)...")
             // -j で全部取得, -n で数値形式
-            let result = try await exifSession.execute(args: ["-j", "-n", "-DateTimeOriginal", url.path])
+            let result = try await exifSession.execute(args: ["-j", "-n",
+                                                              "-DateTimeOriginal", "-CreationDate", "-CreateDate",
+                                                              "-GPSLatitude", "-GPSLongitude", "-GPSAltitude", "-GPSCoordinates",
+                                                              url.path])
             print("Received EXIF data successfully.")
             if result.succeeded, let data = result.stdout.data(using: .utf8) {
                 // json配列としてパース
